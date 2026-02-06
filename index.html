@@ -369,6 +369,139 @@
             background: rgba(33, 128, 141, 0.15);
             color: var(--color-success);
         }
+
+        .admin-controls {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-start;
+        }
+
+        .btn-edit, .btn-delete {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            border-radius: 6px;
+            cursor: pointer;
+            border: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-edit {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .btn-edit:hover {
+            background: var(--color-primary-hover);
+        }
+
+        .btn-delete {
+            background: #c01521;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: #a01219;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            overflow: auto;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: var(--color-surface);
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--color-text-secondary);
+            padding: 0;
+            width: 30px;
+            height: 30px;
+        }
+
+        .modal-close:hover {
+            color: var(--color-text-primary);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            margin-bottom: 0;
+            cursor: pointer;
+        }
+
+        .import-section {
+            background: var(--color-teal-bg);
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 4px solid var(--color-primary);
+        }
+
+        .template-info {
+            background: var(--color-surface);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .badge-muslim {
+            background: rgba(33, 128, 141, 0.2);
+            color: var(--color-primary);
+        }
     </style>
 </head>
 <body>
@@ -597,10 +730,141 @@
             <div id="adminContent" class="hidden">
                 <div style="margin-bottom: 20px;">
                     <button type="button" id="exportBtn" style="margin-right: 10px;">Export Database (JSON)</button>
-                    <button type="button" id="refreshAdminBtn">Refresh View</button>
+                    <button type="button" id="refreshAdminBtn" style="margin-right: 10px;">Refresh View</button>
+                    <button type="button" id="addNewBtn">Add New Specialist</button>
                 </div>
+
+                <div class="import-section">
+                    <h3 style="color: var(--color-primary); margin-bottom: 15px;">📊 Import from Google Sheets</h3>
+                    <p style="margin-bottom: 15px;">You can prepare specialist data in Google Sheets and import it here. Use this template format:</p>
+                    
+                    <div class="template-info">
+<strong>Column Headers (Row 1):</strong><br>
+Name | Specialty | State | City | Phone | Email | Muslim<br><br>
+<strong>Example Data (Row 2):</strong><br>
+Dr. John Smith | Cardiology | VIC | Melbourne | (03) 1234 5678 | john@clinic.com | Yes
+                    </div>
+
+                    <div style="margin-top: 15px;">
+                        <p style="margin-bottom: 10px;"><strong>Instructions:</strong></p>
+                        <ol style="margin-left: 20px; line-height: 1.8;">
+                            <li>Create a Google Sheet with the column headers above</li>
+                            <li>Fill in your specialist data (Muslim column: Yes/No or leave blank)</li>
+                            <li>Copy all cells including headers</li>
+                            <li>Paste into the text area below</li>
+                        </ol>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 15px;">
+                        <label for="importData">Paste Google Sheets Data (Tab-separated)</label>
+                        <textarea id="importData" rows="8" style="width: 100%; padding: 12px; border: 1px solid var(--color-border); border-radius: 8px; font-family: monospace; font-size: 0.9rem; background: var(--color-bg-primary); color: var(--color-text-primary);" placeholder="Name&#9;Specialty&#9;State&#9;City&#9;Phone&#9;Email&#9;Muslim&#10;Dr. John Smith&#9;Cardiology&#9;VIC&#9;Melbourne&#9;(03) 1234 5678&#9;john@clinic.com&#9;Yes"></textarea>
+                    </div>
+                    <button type="button" id="importBtn">Import Specialists</button>
+                    <div id="importStatus" style="margin-top: 10px;"></div>
+                </div>
+
                 <div id="adminResults"></div>
             </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 style="margin: 0;">Edit Specialist</h2>
+                <button class="modal-close" id="closeModal">&times;</button>
+            </div>
+            <form id="editForm">
+                <input type="hidden" id="editId">
+                <div class="form-group">
+                    <label for="editName">Specialist Name <span class="required">*</span></label>
+                    <input type="text" id="editName" required>
+                </div>
+                <div class="form-group">
+                    <label for="editSpecialty">Specialty <span class="required">*</span></label>
+                    <select id="editSpecialty" required>
+                        <option value="">Select specialty...</option>
+                        <option value="Addiction Medicine">Addiction Medicine</option>
+                        <option value="Anaesthesia">Anaesthesia</option>
+                        <option value="Cardiology">Cardiology</option>
+                        <option value="Cardiothoracic Surgery">Cardiothoracic Surgery</option>
+                        <option value="Clinical Genetics">Clinical Genetics</option>
+                        <option value="Dermatology">Dermatology</option>
+                        <option value="Emergency Medicine">Emergency Medicine</option>
+                        <option value="Endocrinology">Endocrinology</option>
+                        <option value="Gastroenterology">Gastroenterology</option>
+                        <option value="General Surgery">General Surgery</option>
+                        <option value="Geriatric Medicine">Geriatric Medicine</option>
+                        <option value="Haematology">Haematology</option>
+                        <option value="Immunology and Allergy">Immunology and Allergy</option>
+                        <option value="Infectious Diseases">Infectious Diseases</option>
+                        <option value="Intensive Care Medicine">Intensive Care Medicine</option>
+                        <option value="Medical Oncology">Medical Oncology</option>
+                        <option value="Nephrology">Nephrology</option>
+                        <option value="Neurology">Neurology</option>
+                        <option value="Neurosurgery">Neurosurgery</option>
+                        <option value="Nuclear Medicine">Nuclear Medicine</option>
+                        <option value="Obstetrics and Gynaecology">Obstetrics and Gynaecology</option>
+                        <option value="Occupational Medicine">Occupational Medicine</option>
+                        <option value="Ophthalmology">Ophthalmology</option>
+                        <option value="Orthopaedic Surgery">Orthopaedic Surgery</option>
+                        <option value="Otolaryngology (ENT)">Otolaryngology (ENT)</option>
+                        <option value="Paediatrics">Paediatrics</option>
+                        <option value="Pain Medicine">Pain Medicine</option>
+                        <option value="Palliative Medicine">Palliative Medicine</option>
+                        <option value="Pathology">Pathology</option>
+                        <option value="Plastic Surgery">Plastic Surgery</option>
+                        <option value="Psychiatry">Psychiatry</option>
+                        <option value="Radiology">Radiology</option>
+                        <option value="Radiation Oncology">Radiation Oncology</option>
+                        <option value="Rehabilitation Medicine">Rehabilitation Medicine</option>
+                        <option value="Respiratory Medicine">Respiratory Medicine</option>
+                        <option value="Rheumatology">Rheumatology</option>
+                        <option value="Sports Medicine">Sports Medicine</option>
+                        <option value="Urology">Urology</option>
+                        <option value="Vascular Surgery">Vascular Surgery</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editState">State/Territory <span class="required">*</span></label>
+                        <select id="editState" required>
+                            <option value="">Select state/territory...</option>
+                            <option value="NSW">New South Wales (NSW)</option>
+                            <option value="VIC">Victoria (VIC)</option>
+                            <option value="QLD">Queensland (QLD)</option>
+                            <option value="WA">Western Australia (WA)</option>
+                            <option value="SA">South Australia (SA)</option>
+                            <option value="TAS">Tasmania (TAS)</option>
+                            <option value="NT">Northern Territory (NT)</option>
+                            <option value="ACT">Australian Capital Territory (ACT)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editCity">City/Suburb</label>
+                        <input type="text" id="editCity">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editPhone">Phone</label>
+                        <input type="text" id="editPhone">
+                    </div>
+                    <div class="form-group">
+                        <label for="editEmail">Email</label>
+                        <input type="email" id="editEmail">
+                    </div>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="editMuslim">
+                    <label for="editMuslim">Muslim Specialist</label>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit">Save Changes</button>
+                    <button type="button" id="cancelEdit" style="background: var(--color-secondary); color: var(--color-text-primary);">Cancel</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -696,6 +960,7 @@
                 locations: city && state ? `${city}, ${state}` : (city || state || 'Location not specified'),
                 phone: 'Contact via clinic',
                 email: 'Available upon request',
+                muslim: false,
                 dateAdded: new Date().toISOString()
             };
 
@@ -818,6 +1083,7 @@
                 locations: 'Melbourne, VIC',
                 phone: '(03) 9123 4567',
                 email: 'e.chen@heartcare.com.au',
+                muslim: false,
                 dateAdded: new Date().toISOString()
             },
             {
@@ -829,6 +1095,7 @@
                 locations: 'Sydney, NSW',
                 phone: '(02) 9876 5432',
                 email: 'j.wilson@boneclinic.com.au',
+                muslim: false,
                 dateAdded: new Date().toISOString()
             },
             {
@@ -840,6 +1107,7 @@
                 locations: 'Brisbane, QLD',
                 phone: '(07) 3456 7890',
                 email: 'sarah.m@skinclinic.com.au',
+                muslim: false,
                 dateAdded: new Date().toISOString()
             }
         ];
@@ -915,7 +1183,7 @@
             }
 
             let html = `
-                <h3>Total Records: ${specialistsDatabase.length}</h3>
+                <h3 style="margin-top: 30px;">Total Records: ${specialistsDatabase.length}</h3>
                 <table class="admin-table">
                     <thead>
                         <tr>
@@ -925,7 +1193,9 @@
                             <th>Location</th>
                             <th>Phone</th>
                             <th>Email</th>
+                            <th>Muslim</th>
                             <th>Date Added</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -933,15 +1203,23 @@
 
             specialistsDatabase.forEach(specialist => {
                 const dateAdded = new Date(specialist.dateAdded).toLocaleDateString('en-AU');
+                const muslimStatus = specialist.muslim ? 'Yes' : 'No';
                 html += `
                     <tr>
                         <td>${specialist.id}</td>
-                        <td>${specialist.name}</td>
+                        <td>${specialist.name}${specialist.muslim ? '<span class="badge badge-muslim">🕌</span>' : ''}</td>
                         <td>${specialist.specialty}</td>
                         <td>${specialist.locations}</td>
                         <td>${specialist.phone}</td>
                         <td>${specialist.email}</td>
+                        <td>${muslimStatus}</td>
                         <td>${dateAdded}</td>
+                        <td>
+                            <div class="admin-controls">
+                                <button class="btn-edit" onclick="editSpecialist(${specialist.id})">Edit</button>
+                                <button class="btn-delete" onclick="deleteSpecialist(${specialist.id})">Delete</button>
+                            </div>
+                        </td>
                     </tr>
                 `;
             });
@@ -953,6 +1231,224 @@
 
             adminResults.innerHTML = html;
         }
+
+        // Edit specialist
+        function editSpecialist(id) {
+            const specialist = specialistsDatabase.find(s => s.id === id);
+            if (!specialist) return;
+
+            document.getElementById('editId').value = specialist.id;
+            document.getElementById('editName').value = specialist.name;
+            document.getElementById('editSpecialty').value = specialist.specialty;
+            document.getElementById('editState').value = specialist.state;
+            document.getElementById('editCity').value = specialist.city || '';
+            document.getElementById('editPhone').value = specialist.phone || '';
+            document.getElementById('editEmail').value = specialist.email || '';
+            document.getElementById('editMuslim').checked = specialist.muslim || false;
+
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        // Delete specialist
+        function deleteSpecialist(id) {
+            const specialist = specialistsDatabase.find(s => s.id === id);
+            if (!specialist) return;
+
+            if (confirm(`Are you sure you want to delete ${specialist.name}?`)) {
+                specialistsDatabase = specialistsDatabase.filter(s => s.id !== id);
+                saveDatabase();
+                updateStats();
+                displayAdminDatabase();
+            }
+        }
+
+        // Close modal
+        document.getElementById('closeModal').addEventListener('click', () => {
+            document.getElementById('editModal').classList.remove('active');
+        });
+
+        document.getElementById('cancelEdit').addEventListener('click', () => {
+            document.getElementById('editModal').classList.remove('active');
+        });
+
+        // Close modal on outside click
+        window.addEventListener('click', (e) => {
+            const modal = document.getElementById('editModal');
+            if (e.target === modal) {
+                modal.classList.remove('active');
+            }
+        });
+
+        // Handle edit form submission
+        document.getElementById('editForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const id = parseInt(document.getElementById('editId').value);
+            const specialist = specialistsDatabase.find(s => s.id === id);
+            
+            if (!specialist) return;
+
+            const city = document.getElementById('editCity').value.trim();
+            const state = document.getElementById('editState').value;
+
+            specialist.name = document.getElementById('editName').value.trim();
+            specialist.specialty = document.getElementById('editSpecialty').value;
+            specialist.state = state;
+            specialist.city = city;
+            specialist.locations = city && state ? `${city}, ${state}` : (city || state || 'Location not specified');
+            specialist.phone = document.getElementById('editPhone').value.trim();
+            specialist.email = document.getElementById('editEmail').value.trim();
+            specialist.muslim = document.getElementById('editMuslim').checked;
+
+            saveDatabase();
+            updateStats();
+            displayAdminDatabase();
+            document.getElementById('editModal').classList.remove('active');
+
+            alert('✓ Specialist updated successfully!');
+        });
+
+        // Add new specialist from admin
+        document.getElementById('addNewBtn').addEventListener('click', () => {
+            document.getElementById('editId').value = '';
+            document.getElementById('editForm').reset();
+            document.getElementById('editModal').classList.add('active');
+
+            // Modify form submission for new specialist
+            const form = document.getElementById('editForm');
+            const originalHandler = form.onsubmit;
+            
+            form.onsubmit = function(e) {
+                e.preventDefault();
+                
+                const id = document.getElementById('editId').value;
+                
+                if (!id) {
+                    // New specialist
+                    const city = document.getElementById('editCity').value.trim();
+                    const state = document.getElementById('editState').value;
+                    
+                    const specialist = {
+                        id: Date.now(),
+                        name: document.getElementById('editName').value.trim(),
+                        specialty: document.getElementById('editSpecialty').value,
+                        state: state,
+                        city: city,
+                        locations: city && state ? `${city}, ${state}` : (city || state || 'Location not specified'),
+                        phone: document.getElementById('editPhone').value.trim() || 'Contact via clinic',
+                        email: document.getElementById('editEmail').value.trim() || 'Available upon request',
+                        muslim: document.getElementById('editMuslim').checked,
+                        dateAdded: new Date().toISOString()
+                    };
+
+                    specialistsDatabase.push(specialist);
+                    saveDatabase();
+                    updateStats();
+                    displayAdminDatabase();
+                    document.getElementById('editModal').classList.remove('active');
+                    alert('✓ Specialist added successfully!');
+                } else {
+                    // Existing edit logic
+                    const specialist = specialistsDatabase.find(s => s.id === parseInt(id));
+                    if (!specialist) return;
+
+                    const city = document.getElementById('editCity').value.trim();
+                    const state = document.getElementById('editState').value;
+
+                    specialist.name = document.getElementById('editName').value.trim();
+                    specialist.specialty = document.getElementById('editSpecialty').value;
+                    specialist.state = state;
+                    specialist.city = city;
+                    specialist.locations = city && state ? `${city}, ${state}` : (city || state || 'Location not specified');
+                    specialist.phone = document.getElementById('editPhone').value.trim();
+                    specialist.email = document.getElementById('editEmail').value.trim();
+                    specialist.muslim = document.getElementById('editMuslim').checked;
+
+                    saveDatabase();
+                    updateStats();
+                    displayAdminDatabase();
+                    document.getElementById('editModal').classList.remove('active');
+                    alert('✓ Specialist updated successfully!');
+                }
+            };
+        });
+
+        // Import from Google Sheets
+        document.getElementById('importBtn').addEventListener('click', () => {
+            const importData = document.getElementById('importData').value.trim();
+            const statusDiv = document.getElementById('importStatus');
+            
+            if (!importData) {
+                statusDiv.innerHTML = '<p style="color: #c01521;">Please paste data to import.</p>';
+                return;
+            }
+
+            try {
+                const lines = importData.split('\n').filter(line => line.trim());
+                if (lines.length < 2) {
+                    statusDiv.innerHTML = '<p style="color: #c01521;">Please include headers and at least one data row.</p>';
+                    return;
+                }
+
+                const headers = lines[0].split('\t').map(h => h.trim().toLowerCase());
+                const nameIdx = headers.indexOf('name');
+                const specialtyIdx = headers.indexOf('specialty');
+                const stateIdx = headers.indexOf('state');
+                const cityIdx = headers.indexOf('city');
+                const phoneIdx = headers.indexOf('phone');
+                const emailIdx = headers.indexOf('email');
+                const muslimIdx = headers.indexOf('muslim');
+
+                if (nameIdx === -1 || specialtyIdx === -1 || stateIdx === -1) {
+                    statusDiv.innerHTML = '<p style="color: #c01521;">Required columns missing: Name, Specialty, State</p>';
+                    return;
+                }
+
+                let imported = 0;
+                for (let i = 1; i < lines.length; i++) {
+                    const cells = lines[i].split('\t');
+                    
+                    const name = cells[nameIdx]?.trim();
+                    const specialty = cells[specialtyIdx]?.trim();
+                    const state = cells[stateIdx]?.trim();
+                    const city = cityIdx !== -1 ? cells[cityIdx]?.trim() : '';
+                    const phone = phoneIdx !== -1 ? cells[phoneIdx]?.trim() : 'Contact via clinic';
+                    const email = emailIdx !== -1 ? cells[emailIdx]?.trim() : 'Available upon request';
+                    const muslimStr = muslimIdx !== -1 ? cells[muslimIdx]?.trim().toLowerCase() : '';
+                    const muslim = muslimStr === 'yes' || muslimStr === 'true' || muslimStr === '1';
+
+                    if (!name || !specialty || !state) continue;
+
+                    const specialist = {
+                        id: Date.now() + i,
+                        name: name,
+                        specialty: specialty,
+                        state: state,
+                        city: city,
+                        locations: city && state ? `${city}, ${state}` : (city || state || 'Location not specified'),
+                        phone: phone,
+                        email: email,
+                        muslim: muslim,
+                        dateAdded: new Date().toISOString()
+                    };
+
+                    specialistsDatabase.push(specialist);
+                    imported++;
+                }
+
+                saveDatabase();
+                updateStats();
+                displayAdminDatabase();
+                document.getElementById('importData').value = '';
+                statusDiv.innerHTML = `<p class="status-message status-success">✓ Successfully imported ${imported} specialist${imported !== 1 ? 's' : ''}!</p>`;
+                
+                setTimeout(() => {
+                    statusDiv.innerHTML = '';
+                }, 5000);
+            } catch (e) {
+                statusDiv.innerHTML = `<p style="color: #c01521;">Error importing data: ${e.message}</p>`;
+            }
+        });
 
         // Refresh admin view
         document.getElementById('refreshAdminBtn').addEventListener('click', () => {
